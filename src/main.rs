@@ -61,6 +61,7 @@ fn setup(mut commands: Commands) {
             },
             Head,
             RigidBody::Dynamic,
+            Collider::rectangle(HEAD_SIZE.x, HEAD_SIZE.y),
             MassPropertiesBundle::new_computed(&Collider::rectangle(HEAD_SIZE.x, HEAD_SIZE.y), 1.0),
         ))
         .id();
@@ -78,6 +79,7 @@ fn setup(mut commands: Commands) {
             },
             RightHand,
             RigidBody::Kinematic,
+            Collider::rectangle(HAND_SIZE.x, HAND_SIZE.y),
             MassPropertiesBundle::new_computed(&Collider::rectangle(HAND_SIZE.x, HAND_SIZE.y), 1.0),
         ))
         .id();
@@ -94,6 +96,7 @@ fn setup(mut commands: Commands) {
             },
             LeftHand,
             RigidBody::Dynamic,
+            Collider::rectangle(HAND_SIZE.x, HAND_SIZE.y),
             MassPropertiesBundle::new_computed(&Collider::rectangle(HAND_SIZE.x, HAND_SIZE.y), 1.0),
         ))
         .id();
@@ -112,6 +115,7 @@ fn setup(mut commands: Commands) {
             },
             RightArm,
             RigidBody::Dynamic,
+            Collider::rectangle(ARM_SIZE.x, ARM_SIZE.y),
             MassPropertiesBundle::new_computed(&Collider::rectangle(ARM_SIZE.x, ARM_SIZE.y), 1.0),
         ))
         .id();
@@ -147,6 +151,7 @@ fn setup(mut commands: Commands) {
             },
             RightBicep,
             RigidBody::Dynamic,
+            Collider::rectangle(BICEP_SIZE.x, BICEP_SIZE.y),
             MassPropertiesBundle::new_computed(&Collider::rectangle(BICEP_SIZE.x, BICEP_SIZE.y), 1.0),
         ))
         .id();
@@ -163,6 +168,7 @@ fn setup(mut commands: Commands) {
             },
             LeftBicep,
             RigidBody::Dynamic,
+            Collider::rectangle(BICEP_SIZE.x, BICEP_SIZE.y),
             MassPropertiesBundle::new_computed(&Collider::rectangle(BICEP_SIZE.x, BICEP_SIZE.y), 1.0),
         ))
         .id();
@@ -180,6 +186,7 @@ fn setup(mut commands: Commands) {
                 ..default()
             },
             RigidBody::Dynamic,
+            Collider::rectangle(TORSO_SIZE.x, TORSO_SIZE.y),
             MassPropertiesBundle::new_computed(&Collider::rectangle(TORSO_SIZE.x, TORSO_SIZE.y), 1.0),
         ))
         .id();
@@ -197,6 +204,7 @@ fn setup(mut commands: Commands) {
             },
             RightThigh,
             RigidBody::Dynamic,
+            Collider::rectangle(BICEP_SIZE.x, BICEP_SIZE.y),
             MassPropertiesBundle::new_computed(&Collider::rectangle(BICEP_SIZE.x, BICEP_SIZE.y), 1.0),
         ))
         .id();
@@ -213,6 +221,7 @@ fn setup(mut commands: Commands) {
             },
             LeftThigh,
             RigidBody::Dynamic,
+            Collider::rectangle(BICEP_SIZE.x, BICEP_SIZE.y),
             MassPropertiesBundle::new_computed(&Collider::rectangle(BICEP_SIZE.x, BICEP_SIZE.y), 1.0),
         ))
         .id();
@@ -229,6 +238,7 @@ fn setup(mut commands: Commands) {
             },
             RightShin,
             RigidBody::Dynamic,
+            Collider::rectangle(BICEP_SIZE.x, BICEP_SIZE.y),
             MassPropertiesBundle::new_computed(&Collider::rectangle(BICEP_SIZE.x, BICEP_SIZE.y), 1.0),
         ))
         .id();
@@ -245,6 +255,7 @@ fn setup(mut commands: Commands) {
             },
             LeftShin,
             RigidBody::Dynamic,
+            Collider::rectangle(BICEP_SIZE.x, BICEP_SIZE.y),
             MassPropertiesBundle::new_computed(&Collider::rectangle(BICEP_SIZE.x, BICEP_SIZE.y), 1.0),
         ))
         .id();
@@ -263,7 +274,6 @@ fn setup(mut commands: Commands) {
             RigidBody::Dynamic,
             Collider::rectangle(FOOT_SIZE.x, FOOT_SIZE.y),
             CollisionLayers::new(Layer::Platform, Layer::Platform),
-            // MassPropertiesBundle::new_computed(&Collider::rectangle(FOOT_SIZE.x, FOOT_SIZE.y), 1.0),
         ))
         .id();
     let left_foot = commands
@@ -281,7 +291,6 @@ fn setup(mut commands: Commands) {
             RigidBody::Dynamic,
             Collider::rectangle(FOOT_SIZE.x, FOOT_SIZE.y),
             CollisionLayers::new(Layer::Platform, Layer::Platform),
-            // MassPropertiesBundle::new_computed(&Collider::rectangle(FOOT_SIZE.x, FOOT_SIZE.y), 1.0),
         ))
         .id();
 
@@ -302,7 +311,6 @@ fn setup(mut commands: Commands) {
             RigidBody::Kinematic,
             Collider::rectangle(500., 10.,),
             CollisionLayers::new(Layer::Platform, Layer::Platform),
-            // MassPropertiesBundle::new_computed(&Collider::rectangle(0., -200.,), 10.0),
         ))
         .id();
     
