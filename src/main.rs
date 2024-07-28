@@ -57,7 +57,7 @@ fn controls(
     mut evr_motion: EventReader<MouseMotion>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut q_windows: Query<&mut Window, With<PrimaryWindow>>,
-    mut torso_query: Query<(&mut Transform, &Torso, Entity), (With<Torso>, Without<LeftHand>, Without<RightHand>)>,
+    mut torso_query: Query<(&mut Transform, &TorsoCore, Entity), (With<TorsoCore>, Without<LeftHand>, Without<RightHand>)>,
     mut right_hand_query: Query<(&mut Transform, &RightHand), (With<RightHand>, Without<LeftHand>)>,
     mut left_hand_query: Query<(&mut Transform, &LeftHand), (With<LeftHand>, Without<RightHand>)>,
     mut collider_query: Query<&CollidingEntities>,
@@ -90,7 +90,6 @@ fn controls(
                 _ => {
                     for (mut transform, _torso, _entity) in torso_query.iter_mut() { 
                         transform.translation = Vec3::new(transform.translation.x - ev.delta.x, transform.translation.y + ev.delta.y, 1.);
-
                     }
                 }
             }

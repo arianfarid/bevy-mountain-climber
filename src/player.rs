@@ -152,7 +152,25 @@ pub fn setup(mut commands: Commands) {
         ))
         .id();
 
-    let torso = commands
+    let torso_core = commands.spawn((
+        SpriteBundle {
+            sprite: {
+                let mut ret = square_sprite.clone();
+                ret.color = Color::srgba(0., 0., 0., 0.);
+                ret.custom_size = Some(TORSO_SIZE);
+                ret
+            },
+            transform: Transform::from_xyz(0.0, -100.0, 0.0),
+            ..default()
+        },
+        TorsoCore,
+        // RigidBody::Dynamic,
+        RigidBody::Kinematic,
+        Collider::rectangle(TORSO_SIZE.x, TORSO_SIZE.y),
+        // MassPropertiesBundle::new_computed(&Collider::rectangle(TORSO_SIZE.x, TORSO_SIZE.y), 1.0),
+    ))
+    .id();
+    let torso_shell = commands
         .spawn((
             SpriteBundle {
                 sprite: {
@@ -165,8 +183,8 @@ pub fn setup(mut commands: Commands) {
                 ..default()
             },
             Torso,
-            // RigidBody::Dynamic,
-            RigidBody::Kinematic,
+            RigidBody::Dynamic,
+            // RigidBody::Kinematic,
             Collider::rectangle(TORSO_SIZE.x, TORSO_SIZE.y),
             // MassPropertiesBundle::new_computed(&Collider::rectangle(TORSO_SIZE.x, TORSO_SIZE.y), 1.0),
         ))
@@ -296,10 +314,20 @@ pub fn setup(mut commands: Commands) {
         .id();
     
     commands.spawn(
-        DistanceJoint::new(head, torso)
+        DistanceJoint::new(head, torso_shell)
         .with_local_anchor_1(Vec2::new(0., -HEAD_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(0., TORSO_SIZE.y / 2.))
         .with_rest_length(0.0)
+        .with_linear_velocity_damping(10.)
+        .with_angular_velocity_damping(ANG_VEC_DAMP)
+        .with_compliance(0.00000001),
+    );
+
+    //Connects torso core to torseo shell
+    commands.spawn(
+        FixedJoint::new(torso_core, torso_shell)
+        .with_local_anchor_1(Vec2::new(-TORSO_SIZE.x / 2., -TORSO_SIZE.y / 2.))
+        .with_local_anchor_2(Vec2::new(-TORSO_SIZE.x / 2., TORSO_SIZE.y / 2.))
         .with_linear_velocity_damping(10.)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000001),
@@ -326,7 +354,7 @@ pub fn setup(mut commands: Commands) {
     );
 
     commands.spawn(
-        DistanceJoint::new(right_bicep, torso)
+        DistanceJoint::new(right_bicep, torso_shell)
         .with_local_anchor_1(Vec2::new(-ARM_SIZE.x / 2., -ARM_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(TORSO_SIZE.x / 2., TORSO_SIZE.y / 2.))
         .with_rest_length(1.0)
@@ -355,7 +383,7 @@ pub fn setup(mut commands: Commands) {
         .with_compliance(0.00000005),
     );
     commands.spawn(
-        DistanceJoint::new(left_bicep, torso)
+        DistanceJoint::new(left_bicep, torso_shell)
         .with_local_anchor_1(Vec2::new(ARM_SIZE.x / 2., -ARM_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(-TORSO_SIZE.x / 2., TORSO_SIZE.y / 2.))
         .with_rest_length(1.0)
@@ -385,7 +413,7 @@ pub fn setup(mut commands: Commands) {
     );
 
     commands.spawn(
-        DistanceJoint::new(right_thigh, torso)
+        DistanceJoint::new(right_thigh, torso_shell)
         .with_local_anchor_1(Vec2::new(THIGH_SIZE.x / 2., THIGH_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(TORSO_SIZE.x / 2., -TORSO_SIZE.y / 2.))
         .with_rest_length(1.0)
@@ -414,7 +442,7 @@ pub fn setup(mut commands: Commands) {
         .with_compliance(0.00000005),
     );
     commands.spawn(
-        DistanceJoint::new(left_thigh, torso)
+        DistanceJoint::new(left_thigh, torso_shell)
         .with_local_anchor_1(Vec2::new(-THIGH_SIZE.x / 2., THIGH_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(-TORSO_SIZE.x / 2., -TORSO_SIZE.y / 2.))
         .with_rest_length(1.0)
@@ -430,6 +458,8 @@ pub fn setup(mut commands: Commands) {
 pub struct Head;
 #[derive(Component)]
 pub struct Torso;
+#[derive(Component)]
+pub struct TorsoCore;
 #[derive(Component)]
 pub struct RightArm;
 #[derive(Component)]
