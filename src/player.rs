@@ -1,7 +1,7 @@
-use avian2d::{ prelude::* };
-use bevy::{input::mouse::MouseMotion, prelude::*, window::{CursorGrabMode, PrimaryWindow}};
+use avian2d::prelude::*;
+use bevy::prelude::*;
 
-use crate::{Floor, Layer, ANG_VEC_DAMP};
+use crate::{Floor, Layer, ANG_VEC_DAMP, LIN_VEC_DAMP};
 
 pub const HEAD_SIZE: Vec2 = Vec2::new(20.0, 25.);
 pub const HAND_SIZE: Vec2 = Vec2::new(15.0, 20.);
@@ -11,6 +11,9 @@ pub const TORSO_SIZE: Vec2 = Vec2::new(30.0, 50.);
 pub const THIGH_SIZE: Vec2 = Vec2::new(20.,50.);
 pub const SHIN_SIZE: Vec2 = Vec2::new(17.5, 50.);
 pub const FOOT_SIZE: Vec2 = Vec2::new(20., 30.);
+pub const SHOULDER_SIZE: Vec2 = Vec2::new(20., 20.);
+pub const STRETCH: f32 = 100.;
+pub const WINGSPAN: f32 = (HAND_SIZE.y / 2.) + ARM_SIZE.y + BICEP_SIZE.y + STRETCH;
 
 #[derive(Component)]
 pub struct MainCamera;
@@ -170,6 +173,41 @@ pub fn setup(mut commands: Commands) {
         // MassPropertiesBundle::new_computed(&Collider::rectangle(TORSO_SIZE.x, TORSO_SIZE.y), 1.0),
     ))
     .id();
+
+    let right_shoulder = commands.spawn((
+        SpriteBundle {
+            sprite: {
+                let mut ret = square_sprite.clone();
+                ret.color = Color::srgba(0., 0., 0., 1.);
+                ret.custom_size = Some(SHOULDER_SIZE);
+                ret
+            },
+            transform: Transform::from_xyz(0.0, -100.0, 0.0),
+            ..default()
+        },
+        RightShoulder,
+        RigidBody::Dynamic,
+        Collider::rectangle(SHOULDER_SIZE.x, SHOULDER_SIZE.y),
+    ))
+    .id();
+
+    let left_shoulder = commands.spawn((
+        SpriteBundle {
+            sprite: {
+                let mut ret = square_sprite.clone();
+                ret.color = Color::srgba(0., 0., 0., 1.);
+                ret.custom_size = Some(SHOULDER_SIZE);
+                ret
+            },
+            transform: Transform::from_xyz(0.0, -100.0, 0.0),
+            ..default()
+        },
+        LeftShoulder,
+        RigidBody::Dynamic,
+        Collider::rectangle(SHOULDER_SIZE.x, SHOULDER_SIZE.y),
+    ))
+    .id();
+
     let torso_shell = commands
         .spawn((
             SpriteBundle {
@@ -318,7 +356,7 @@ pub fn setup(mut commands: Commands) {
         .with_local_anchor_1(Vec2::new(0., -HEAD_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(0., TORSO_SIZE.y / 2.))
         .with_rest_length(0.0)
-        .with_linear_velocity_damping(10.)
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000001),
     );
@@ -328,10 +366,30 @@ pub fn setup(mut commands: Commands) {
         FixedJoint::new(torso_core, torso_shell)
         .with_local_anchor_1(Vec2::new(-TORSO_SIZE.x / 2., -TORSO_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(-TORSO_SIZE.x / 2., TORSO_SIZE.y / 2.))
-        .with_linear_velocity_damping(10.)
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000001),
     );
+
+    //Creates shoulders to ease querying
+    commands.spawn(
+        FixedJoint::new(right_shoulder, torso_shell)
+        .with_local_anchor_1(Vec2::new(-ARM_SIZE.x / 2., -ARM_SIZE.y / 2.))
+        .with_local_anchor_2(Vec2::new(TORSO_SIZE.x / 2., TORSO_SIZE.y / 2.))
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
+        .with_angular_velocity_damping(ANG_VEC_DAMP)
+        .with_compliance(0.00000001),
+    );
+    commands.spawn(
+        FixedJoint::new(left_shoulder, torso_shell)
+        .with_local_anchor_1(Vec2::new(ARM_SIZE.x / 2., -ARM_SIZE.y / 2.))
+        .with_local_anchor_2(Vec2::new(-TORSO_SIZE.x / 2., TORSO_SIZE.y / 2.))
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
+        .with_angular_velocity_damping(ANG_VEC_DAMP)
+        .with_compliance(0.00000001),
+    );
+
+
 
     //Connects right arm
     commands.spawn(
@@ -339,7 +397,7 @@ pub fn setup(mut commands: Commands) {
         .with_local_anchor_1(Vec2::new(0., -HAND_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(0. , ARM_SIZE.y / 2.))
         .with_rest_length(0.0)
-        .with_linear_velocity_damping(10.)
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000005),
     );
@@ -348,7 +406,7 @@ pub fn setup(mut commands: Commands) {
         .with_local_anchor_1(Vec2::new(0., -ARM_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(0., BICEP_SIZE.y / 2.))
         .with_rest_length(0.0)
-        .with_linear_velocity_damping(10.)
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000005),
     );
@@ -358,7 +416,7 @@ pub fn setup(mut commands: Commands) {
         .with_local_anchor_1(Vec2::new(-ARM_SIZE.x / 2., -ARM_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(TORSO_SIZE.x / 2., TORSO_SIZE.y / 2.))
         .with_rest_length(1.0)
-        .with_linear_velocity_damping(10.)
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000005),
     );
@@ -369,7 +427,7 @@ pub fn setup(mut commands: Commands) {
         .with_local_anchor_1(Vec2::new(0., -HAND_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(0. , ARM_SIZE.y / 2.))
         .with_rest_length(0.0)
-        .with_linear_velocity_damping(10.)
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000005),
     );
@@ -378,7 +436,7 @@ pub fn setup(mut commands: Commands) {
         .with_local_anchor_1(Vec2::new(0., -ARM_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(0., BICEP_SIZE.y / 2.))
         .with_rest_length(0.0)
-        .with_linear_velocity_damping(10.)
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000005),
     );
@@ -387,7 +445,7 @@ pub fn setup(mut commands: Commands) {
         .with_local_anchor_1(Vec2::new(ARM_SIZE.x / 2., -ARM_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(-TORSO_SIZE.x / 2., TORSO_SIZE.y / 2.))
         .with_rest_length(1.0)
-        .with_linear_velocity_damping(10.)
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000005),
     );
@@ -398,7 +456,7 @@ pub fn setup(mut commands: Commands) {
         .with_local_anchor_1(Vec2::new(0., FOOT_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(0. , -SHIN_SIZE.y / 2.))
         .with_rest_length(0.0)
-        .with_linear_velocity_damping(10.)
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000005),
     );
@@ -407,7 +465,7 @@ pub fn setup(mut commands: Commands) {
         .with_local_anchor_1(Vec2::new(0., -THIGH_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(0., SHIN_SIZE.y / 2.))
         .with_rest_length(0.0)
-        .with_linear_velocity_damping(10.)
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000005),
     );
@@ -417,7 +475,7 @@ pub fn setup(mut commands: Commands) {
         .with_local_anchor_1(Vec2::new(THIGH_SIZE.x / 2., THIGH_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(TORSO_SIZE.x / 2., -TORSO_SIZE.y / 2.))
         .with_rest_length(1.0)
-        .with_linear_velocity_damping(10.)
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000005),
     );
@@ -428,7 +486,7 @@ pub fn setup(mut commands: Commands) {
         .with_local_anchor_1(Vec2::new(0., FOOT_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(0. , -SHIN_SIZE.y / 2.))
         .with_rest_length(0.0)
-        .with_linear_velocity_damping(10.)
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000005),
     );
@@ -437,7 +495,7 @@ pub fn setup(mut commands: Commands) {
         .with_local_anchor_1(Vec2::new(0., -THIGH_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(0., SHIN_SIZE.y / 2.))
         .with_rest_length(0.0)
-        .with_linear_velocity_damping(10.)
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000005),
     );
@@ -446,7 +504,7 @@ pub fn setup(mut commands: Commands) {
         .with_local_anchor_1(Vec2::new(-THIGH_SIZE.x / 2., THIGH_SIZE.y / 2.))
         .with_local_anchor_2(Vec2::new(-TORSO_SIZE.x / 2., -TORSO_SIZE.y / 2.))
         .with_rest_length(1.0)
-        .with_linear_velocity_damping(10.)
+        .with_linear_velocity_damping(LIN_VEC_DAMP)
         .with_angular_velocity_damping(ANG_VEC_DAMP)
         .with_compliance(0.00000005),
     );
@@ -458,6 +516,10 @@ pub fn setup(mut commands: Commands) {
 pub struct Head;
 #[derive(Component)]
 pub struct Torso;
+#[derive(Component)]
+pub struct RightShoulder;
+#[derive(Component)]
+pub struct LeftShoulder;
 #[derive(Component)]
 pub struct TorsoCore;
 #[derive(Component)]

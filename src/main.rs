@@ -6,6 +6,7 @@ mod player;
 
 pub const GRAVITY: Vec2 = Vec2::new(0., -10000.);
 pub const ANG_VEC_DAMP: f32 = 300.;
+pub const LIN_VEC_DAMP: f32 = 80.;
 
 // Define the collision layers
 #[derive(PhysicsLayer)]
@@ -58,8 +59,10 @@ fn controls(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut q_windows: Query<&mut Window, With<PrimaryWindow>>,
     mut torso_query: Query<(&mut Transform, &TorsoCore, Entity), (With<TorsoCore>, Without<LeftHand>, Without<RightHand>)>,
-    mut right_hand_query: Query<(&mut Transform, &RightHand), (With<RightHand>, Without<LeftHand>)>,
-    mut left_hand_query: Query<(&mut Transform, &LeftHand), (With<LeftHand>, Without<RightHand>)>,
+    mut right_hand_query: Query<(&mut Transform, &RightHand), (With<RightHand>, Without<LeftHand>, Without<TorsoCore>, Without<LeftShoulder>, Without<RightShoulder>)>,
+    mut left_hand_query: Query<(&mut Transform, &LeftHand), (With<LeftHand>, Without<RightHand>, Without<TorsoCore>, Without<LeftShoulder>, Without<RightShoulder>)>,
+    mut right_shoulder_query: Query<(&mut Transform, &RightShoulder), (With<RightShoulder>, Without<LeftShoulder>, Without<TorsoCore>, Without<LeftHand>, Without<RightHand>)>,
+    mut left_shoulder_query: Query<(&mut Transform, &LeftShoulder), (With<LeftShoulder>, Without<RightShoulder>, Without<TorsoCore>, Without<LeftHand>, Without<RightHand>)>,
     mut collider_query: Query<&CollidingEntities>,
     mouse_buttons:Res<ButtonInput<MouseButton>>,
     user_state: Res<State<UserControlState>>,
@@ -76,33 +79,61 @@ fn controls(
     } else if keyboard_input.just_pressed(KeyCode::KeyS) {
         set_user_state.set(UserControlState::RightHand)
     }
+    let (mut torso_transform, _torso, _torso_core_entity) = torso_query.single_mut();
+    let (mut left_hand_transform, _left_hand) = left_hand_query.single_mut();
+    let (mut right_hand_transform, _right_hand) = right_hand_query.single_mut();
+    let (left_shoulder_transform, _left_shoulder) = left_shoulder_query.single_mut();
+    let (right_shoulder_transform, _right_shoulder) = right_shoulder_query.single_mut();
+    
+    // Move selected limb anchor. If mouse is clicked, the torso core is moved to mimick pulling motion.
     for ev in evr_motion.read() {
-        println!("Mouse moved: X: {} px, Y: {} px", ev.delta.x, ev.delta.y);
-        for collider in collider_query.iter_mut() {
-            println!("COLIDER: {:?}", collider);
-        }
         if mouse_buttons.pressed(MouseButton::Left) {
-            println!("MOUSE");
             match user_state.get() {
                 UserControlState::Pause => {
                     //
                 }
                 _ => {
-                    for (mut transform, _torso, _entity) in torso_query.iter_mut() { 
-                        transform.translation = Vec3::new(transform.translation.x - ev.delta.x, transform.translation.y + ev.delta.y, 1.);
+                    let new_transform = Vec3::new(torso_transform.translation.x - ev.delta.x, torso_transform.translation.y + ev.delta.y, 1.);
+                    let new_lshoulder_transform = Vec3::new(left_shoulder_transform.translation.x - ev.delta.x, left_shoulder_transform.translation.y + ev.delta.y, 1.);
+                    let new_rshoulder_transform = Vec3::new(right_shoulder_transform.translation.x - ev.delta.x, right_shoulder_transform.translation.y + ev.delta.y, 1.);
+                    let lwing =  (left_hand_transform.translation - new_lshoulder_transform).length();
+                    let rwing: f32 =  (right_hand_transform.translation - new_rshoulder_transform).length();
+                    if lwing > WINGSPAN || rwing > WINGSPAN {
+                        //Do not move
+                        println!("LIM");
+                         println!("WINGSPAN: {:?}", WINGSPAN);
+                        println!("RWINGSPAN: {:?}", rwing);
+                        println!("LWINGSPAN: {:?}", lwing);
+                    } else {
+                        println!("WINGSPAN: {:?}", WINGSPAN);
+                        println!("RWINGSPAN: {:?}", rwing);
+                        println!("LWINGSPAN: {:?}", lwing);
+                        torso_transform.translation = new_transform;
                     }
                 }
             }
         } else {
             match user_state.get() {
                 UserControlState::LeftHand => {
-                    for (mut transform, _hand) in left_hand_query.iter_mut() { 
-                        transform.translation = Vec3::new(transform.translation.x + ev.delta.x, transform.translation.y - ev.delta.y, 1.);
+                    let new_transform = Vec3::new(left_hand_transform.translation.x + ev.delta.x, left_hand_transform.translation.y - ev.delta.y, 1.);
+                    let lwing =  (left_shoulder_transform.translation - new_transform).length();
+                    if lwing > WINGSPAN {
+                        //Do not move
+                    } else {
+                        println!("WINGSPAN: {:?}", WINGSPAN);
+                        println!("LWINGSPAN: {:?}", lwing);
+                        left_hand_transform.translation = new_transform;
                     }
                 }
                 UserControlState::RightHand => {
-                    for (mut transform, _hand) in right_hand_query.iter_mut() { 
-                        transform.translation = Vec3::new(transform.translation.x + ev.delta.x, transform.translation.y - ev.delta.y, 1.);
+                    let new_transform = Vec3::new(right_hand_transform.translation.x + ev.delta.x, right_hand_transform.translation.y - ev.delta.y, 1.);
+                    let rwing =  (right_shoulder_transform.translation - new_transform).length();
+                    if rwing > WINGSPAN {
+                        //Do not move
+                    } else {
+                        println!("WINGSPAN: {:?}", WINGSPAN);
+                        println!("RWINGSPAN: {:?}", rwing);
+                        right_hand_transform.translation = new_transform;
                     }
                 }
                 UserControlState::Pause => {
