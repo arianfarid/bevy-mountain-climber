@@ -165,7 +165,8 @@ pub fn setup(mut commands: Commands) {
                 ..default()
             },
             Torso,
-            RigidBody::Dynamic,
+            // RigidBody::Dynamic,
+            RigidBody::Kinematic,
             Collider::rectangle(TORSO_SIZE.x, TORSO_SIZE.y),
             // MassPropertiesBundle::new_computed(&Collider::rectangle(TORSO_SIZE.x, TORSO_SIZE.y), 1.0),
         ))

@@ -53,12 +53,15 @@ pub enum UserControlState {
     Pause
 }
 fn controls(
+    mut commands: Commands,
     mut evr_motion: EventReader<MouseMotion>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut q_windows: Query<&mut Window, With<PrimaryWindow>>,
+    mut torso_query: Query<(&mut Transform, &Torso, Entity), (With<Torso>, Without<LeftHand>, Without<RightHand>)>,
     mut right_hand_query: Query<(&mut Transform, &RightHand), (With<RightHand>, Without<LeftHand>)>,
     mut left_hand_query: Query<(&mut Transform, &LeftHand), (With<LeftHand>, Without<RightHand>)>,
-    mut collider_query: Query<(&CollidingEntities)>,
+    mut collider_query: Query<&CollidingEntities>,
+    mouse_buttons:Res<ButtonInput<MouseButton>>,
     user_state: Res<State<UserControlState>>,
     mut set_user_state: ResMut<NextState<UserControlState>>,
 ) {
@@ -78,21 +81,36 @@ fn controls(
         for collider in collider_query.iter_mut() {
             println!("COLIDER: {:?}", collider);
         }
-        match user_state.get() {
-            UserControlState::LeftHand => {
-                for (mut transform, _hand) in left_hand_query.iter_mut() { 
-                    transform.translation = Vec3::new(transform.translation.x + ev.delta.x, transform.translation.y - ev.delta.y, 1.);
+        if mouse_buttons.pressed(MouseButton::Left) {
+            println!("MOUSE");
+            match user_state.get() {
+                UserControlState::Pause => {
+                    //
+                }
+                _ => {
+                    for (mut transform, _torso, _entity) in torso_query.iter_mut() { 
+                        transform.translation = Vec3::new(transform.translation.x - ev.delta.x, transform.translation.y + ev.delta.y, 1.);
+
+                    }
                 }
             }
-            UserControlState::RightHand => {
-                for (mut transform, _hand) in right_hand_query.iter_mut() { 
-                    transform.translation = Vec3::new(transform.translation.x + ev.delta.x, transform.translation.y - ev.delta.y, 1.);
+        } else {
+            match user_state.get() {
+                UserControlState::LeftHand => {
+                    for (mut transform, _hand) in left_hand_query.iter_mut() { 
+                        transform.translation = Vec3::new(transform.translation.x + ev.delta.x, transform.translation.y - ev.delta.y, 1.);
+                    }
+                }
+                UserControlState::RightHand => {
+                    for (mut transform, _hand) in right_hand_query.iter_mut() { 
+                        transform.translation = Vec3::new(transform.translation.x + ev.delta.x, transform.translation.y - ev.delta.y, 1.);
+                    }
+                }
+                UserControlState::Pause => {
+                    //
                 }
             }
-            UserControlState::Pause => {
-                //
             }
-        }
         
     }
 }
